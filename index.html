@@ -61,6 +61,8 @@ button:hover {
     width: 100%;
     height: 100%;
     display: none;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
     z-index: 9999;
 }
 
@@ -145,38 +147,28 @@ document.body.addEventListener("click", function() {
     document.getElementById("bgMusic").play();
 }, { once: true });
 
-function loadQuestion() {
-    if (currentQuestion >= questions.length) {
-        endGame();
-        return;
-    }
-
-    let q = questions[currentQuestion];
-    let html = "<h2>Question " + (currentQuestion + 1) + "</h2>";
-    html += "<p>" + q.question + "</p>";
-
-    q.options.forEach((option, index) => {
-        html += `<button onclick="checkAnswer(${index})">${option}</button><br>`;
-    });
-
-    document.getElementById("questionArea").innerHTML = html;
-    document.getElementById("feedback").innerHTML = "";
-}
-
 function triggerJumpScare(intense=false) {
     let scare = document.getElementById("jumpscare");
     let scream = document.getElementById("screamSound");
 
     scare.style.display = "block";
+    scare.style.opacity = "1";
+
     scream.volume = intense ? 1.0 : 0.6;
     scream.play();
 
     document.body.classList.add("shake");
 
+    // Stay visible for 2.5 seconds
     setTimeout(() => {
-        scare.style.display = "none";
-        document.body.classList.remove("shake");
-    }, 600);
+        scare.style.opacity = "0";
+
+        setTimeout(() => {
+            scare.style.display = "none";
+            document.body.classList.remove("shake");
+        }, 500);
+
+    }, 2500);
 }
 
 function checkAnswer(selected) {
@@ -196,7 +188,25 @@ function checkAnswer(selected) {
     document.getElementById("score").innerText = score;
     currentQuestion++;
 
-    setTimeout(loadQuestion, 1500);
+    setTimeout(loadQuestion, 1800);
+}
+
+function loadQuestion() {
+    if (currentQuestion >= questions.length) {
+        endGame();
+        return;
+    }
+
+    let q = questions[currentQuestion];
+    let html = "<h2>Question " + (currentQuestion + 1) + "</h2>";
+    html += "<p>" + q.question + "</p>";
+
+    q.options.forEach((option, index) => {
+        html += `<button onclick="checkAnswer(${index})">${option}</button><br>`;
+    });
+
+    document.getElementById("questionArea").innerHTML = html;
+    document.getElementById("feedback").innerHTML = "";
 }
 
 function endGame() {
@@ -218,6 +228,7 @@ function endGame() {
 
     document.getElementById("questionArea").innerHTML = ending;
 }
+
 loadQuestion();
 </script>
 
