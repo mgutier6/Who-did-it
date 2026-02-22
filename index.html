@@ -1,9 +1,201 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<title>Murder Mystery</title>
+<meta charset="UTF-8">
+<title>The Case of the Correlation Killer</title>
+<style>
+    body {
+        font-family: 'Courier New', monospace;
+        background-color: #111;
+        color: #eee;
+        text-align: center;
+        padding: 20px;
+    }
+
+    h1 {
+        color: crimson;
+    }
+
+    .card {
+        background: #1c1c1c;
+        padding: 20px;
+        margin: 20px auto;
+        border-radius: 10px;
+        max-width: 700px;
+        box-shadow: 0 0 15px crimson;
+    }
+
+    button {
+        padding: 10px 20px;
+        margin: 10px;
+        background-color: crimson;
+        border: none;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    button:hover {
+        background-color: darkred;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .score {
+        font-size: 18px;
+        margin-top: 10px;
+        color: lightgreen;
+    }
+
+    .wrong {
+        color: orange;
+    }
+
+    .correct {
+        color: lightgreen;
+    }
+</style>
 </head>
+
 <body>
-<h1>Who Did It?</h1>
-<p>Welcome to the murder mystery game!</p>
+
+<h1>🕵️ The Case of the Correlation Killer</h1>
+
+<div class="card" id="game">
+    <p id="story">
+        A famous statistics professor has been found unconscious in the classroom.
+        The only clue? A mysterious scatterplot drawn on the board...
+        <br><br>
+        To solve the case, you must answer statistics questions correctly.
+        Each correct answer unlocks a clue.
+    </p>
+
+    <div id="questionArea"></div>
+    <div id="feedback"></div>
+    <div class="score">Clues Collected: <span id="score">0</span>/5</div>
+</div>
+
+<script>
+
+let score = 0;
+let currentQuestion = 0;
+
+const questions = [
+{
+    question: "What type of variables are required to create a scatterplot?",
+    options: [
+        "Two categorical variables",
+        "Two quantitative variables",
+        "One categorical and one quantitative",
+        "Any two variables"
+    ],
+    answer: 1
+},
+{
+    question: "If a scatterplot shows that as X increases, Y decreases, the relationship is:",
+    options: [
+        "Positive",
+        "Negative",
+        "Curved",
+        "Strong"
+    ],
+    answer: 1
+},
+{
+    question: "If the points follow roughly a straight line, the form is:",
+    options: [
+        "Curved",
+        "Clustered",
+        "Linear",
+        "Random"
+    ],
+    answer: 2
+},
+{
+    question: "What are the possible bounds of correlation (r)?",
+    options: [
+        "0 to 1",
+        "-10 to 10",
+        "-1 to 1",
+        "No limits"
+    ],
+    answer: 2
+},
+{
+    question: "A correlation of 0 means:",
+    options: [
+        "Strong positive relationship",
+        "Strong negative relationship",
+        "No linear relationship",
+        "Causation"
+    ],
+    answer: 2
+}
+];
+
+function loadQuestion() {
+    if (currentQuestion >= questions.length) {
+        endGame();
+        return;
+    }
+
+    let q = questions[currentQuestion];
+    let html = "<h2>Question " + (currentQuestion + 1) + "</h2>";
+    html += "<p>" + q.question + "</p>";
+
+    q.options.forEach((option, index) => {
+        html += `<button onclick="checkAnswer(${index})">${option}</button><br>`;
+    });
+
+    document.getElementById("questionArea").innerHTML = html;
+    document.getElementById("feedback").innerHTML = "";
+}
+
+function checkAnswer(selected) {
+    let correct = questions[currentQuestion].answer;
+
+    if (selected === correct) {
+        score++;
+        document.getElementById("feedback").innerHTML =
+            "<p class='correct'>Correct! 🔍 You found a clue.</p>";
+    } else {
+        document.getElementById("feedback").innerHTML =
+            "<p class='wrong'>Wrong! The killer laughs in statistical superiority.</p>";
+    }
+
+    document.getElementById("score").innerText = score;
+    currentQuestion++;
+
+    setTimeout(loadQuestion, 1500);
+}
+
+function endGame() {
+    let ending = "";
+
+    if (score >= 4) {
+        ending = `
+        <h2>🎉 Case Solved!</h2>
+        <p>You discovered that the scatterplot showed a STRONG NEGATIVE LINEAR relationship.
+        The professor collapsed after confusing correlation with causation!
+        You exposed the real culprit: Misinterpreted Data!</p>
+        `;
+    } else {
+        ending = `
+        <h2>💀 Case Unsolved...</h2>
+        <p>You failed to gather enough clues.
+        The Correlation Killer escapes to mislead another statistics class.</p>
+        `;
+    }
+
+    document.getElementById("questionArea").innerHTML = ending;
+}
+
+loadQuestion();
+
+</script>
+
 </body>
 </html>
