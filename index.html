@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Murder Mystery Stats Review</title>
+<title>Murder Mystery: Correlation Killer</title>
 
 <style>
 body {
@@ -44,12 +44,13 @@ button:hover {
     z-index: 999;
 }
 
-.dot {
-    width: 8px;
-    height: 8px;
-    background-color: black;
-    border-radius: 50%;
-    position: absolute;
+.zoom {
+    animation: zoomIn 5s forwards;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(1); }
+    to { transform: scale(1.2); }
 }
 
 .shake {
@@ -71,6 +72,14 @@ button:hover {
     position: relative;
 }
 
+.dot {
+    width: 8px;
+    height: 8px;
+    background-color: black;
+    border-radius: 50%;
+    position: absolute;
+}
+
 #ending {
     display: none;
     position: fixed;
@@ -84,9 +93,21 @@ button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 998;
     text-align: center;
+    z-index: 998;
     padding: 20px;
+}
+
+#redFlash {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: red;
+    opacity: 0.7;
+    z-index: 997;
 }
 </style>
 </head>
@@ -96,9 +117,10 @@ button:hover {
 <h1>🔪 Murder Mystery: Correlation Killer 🔪</h1>
 <div id="game"></div>
 
-<!-- Local Images -->
 <img id="jumpscare" src="jumpscare.png">
 <img id="jumpscare2" src="jumpscare2.png">
+
+<div id="redFlash"></div>
 
 <audio id="bgMusic" src="https://www.fesliyanstudios.com/play-mp3/387" loop autoplay></audio>
 <audio id="screamSound" src="https://www.fesliyanstudios.com/play-mp3/4387"></audio>
@@ -111,36 +133,28 @@ BUT HE WILL BE BACK FOR VENGEANCE.
 <script>
 let questions = [
 {q:"What type of variables are required for a scatterplot?",
-a:["Two categorical","Two quantitative","One categorical, one quantitative","Any variables"],
-c:1},
+a:["Two categorical","Two quantitative","One categorical, one quantitative","Any variables"],c:1},
 
 {q:"If r = -0.85, the relationship is:",
-a:["Strong positive","Strong negative","Weak negative","No relationship"],
-c:1},
+a:["Strong positive","Strong negative","Weak negative","No relationship"],c:1},
 
 {q:"What does r = 0 mean?",
-a:["Strong relationship","No linear relationship","Perfect positive","Curved relationship"],
-c:1},
+a:["Strong relationship","No linear relationship","Perfect positive","Curved relationship"],c:1},
 
 {q:"What is the range of r?",
-a:["-1 to 1","0 to 1","-10 to 10","-100 to 100"],
-c:0},
+a:["-1 to 1","0 to 1","-10 to 10","-100 to 100"],c:0},
 
 {q:"A lurking variable is:",
-a:["The response variable","A hidden variable affecting results","The explanatory variable","An outlier"],
-c:1},
+a:["The response variable","A hidden variable affecting results","The explanatory variable","An outlier"],c:1},
 
 {q:"Correlation of 1 means:",
-a:["Perfect positive linear","Perfect negative linear","Curved relationship","No relationship"],
-c:0},
+a:["Perfect positive linear","Perfect negative linear","Curved relationship","No relationship"],c:0},
 
 {q:"Necessary condition for correlation:",
-a:["Straight enough","Large sample only","Categorical data","Outliers present"],
-c:0},
+a:["Straight enough","Large sample only","Categorical data","Outliers present"],c:0},
 
 {q:"Correlation vs Causation:",
-a:["They are the same","Correlation proves cause","Correlation does not prove causation","Causation proves correlation"],
-c:2}
+a:["They are the same","Correlation proves cause","Correlation does not prove causation","Causation proves correlation"],c:2}
 ];
 
 let current = 0;
@@ -151,9 +165,7 @@ if(current < questions.length){
     let q = questions[current];
     document.getElementById("game").innerHTML =
     "<h2>"+q.q+"</h2>" +
-    q.a.map((ans,i)=>
-        `<button onclick="checkAnswer(${i})">${ans}</button>`
-    ).join("");
+    q.a.map((ans,i)=>`<button onclick="checkAnswer(${i})">${ans}</button>`).join("");
 }
 else{
     loadBoss();
@@ -180,7 +192,7 @@ let scare=document.getElementById("jumpscare");
 let scream=document.getElementById("screamSound");
 
 scare.style.display="block";
-scream.currentTime = 0;
+scream.currentTime=0;
 scream.play();
 document.body.classList.add("shake");
 
@@ -228,19 +240,32 @@ document.getElementById("game").style.display="none";
 document.getElementById("ending").style.display="flex";
 
 setTimeout(()=>{
+triggerFinalScare();
+},7000);
+}
+
+function triggerFinalScare(){
+let flash=document.getElementById("redFlash");
 let scare2=document.getElementById("jumpscare2");
 let scream=document.getElementById("screamSound");
+
+flash.style.display="block";
+
+setTimeout(()=>{
+flash.style.display="none";
 scare2.style.display="block";
-scream.currentTime = 0;
+scare2.classList.add("zoom");
+scream.currentTime=0;
 scream.play();
 document.body.classList.add("shake");
 
 setTimeout(()=>{
 scare2.style.display="none";
+scare2.classList.remove("zoom");
 document.body.classList.remove("shake");
 },5000);
 
-},7000);
+},300);
 }
 
 loadQuestion();
