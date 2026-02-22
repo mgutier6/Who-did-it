@@ -115,8 +115,8 @@ button:hover {
 <img id="jumpscare2" src="jumpscare2.png">
 <div id="redFlash"></div>
 
-<!-- Your local audio files -->
-<audio id="bgMusic" src="scary.mp3" loop autoplay></audio>
+<!-- Background music (will start on first click) -->
+<audio id="bgMusic" src="scary.mp3" loop></audio>
 <audio id="screamSound" src="scream.mp3"></audio>
 
 <div id="ending">
@@ -154,6 +154,8 @@ a:["They are the same","Correlation proves cause","Correlation does not prove ca
 
 let current = 0;
 let darkness = 20;
+let bgStarted = false;
+const bgMusic = document.getElementById("bgMusic");
 
 function loadQuestion(){
 if(current < questions.length){
@@ -169,6 +171,11 @@ else{
 }
 
 function checkAnswer(i){
+if(!bgStarted){
+    bgMusic.play().catch(()=>{}); // Start bg music on first click
+    bgStarted = true;
+}
+
 darkenScreen();
 
 if(i !== questions[current].c){
@@ -239,7 +246,7 @@ document.getElementById("game").style.display="none";
 let ending = document.getElementById("ending");
 ending.style.display = "block";
 
-document.getElementById("bgMusic").pause();
+bgMusic.pause();
 
 setTimeout(()=>{
 triggerFinalScare();
@@ -256,7 +263,7 @@ flash.style.display="block";
 setTimeout(()=>{
 flash.style.display="none";
 
-scare2.style.display="block";  // Zoom removed
+scare2.style.display="block"; // No zoom
 scream.currentTime=0;
 scream.play();
 
@@ -269,10 +276,6 @@ document.body.classList.remove("shake");
 
 },300);
 }
-
-// Ensure background music plays continuously
-let bgMusic = document.getElementById("bgMusic");
-bgMusic.play().catch(()=>{}); // prevent autoplay errors
 
 loadQuestion();
 </script>
