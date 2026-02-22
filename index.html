@@ -90,7 +90,6 @@ button:hover {
     background-color: black;
     color: white;
     font-size: 28px;
-    display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -237,7 +236,11 @@ triggerJumpScare();
 function endGame(){
 document.getElementById("bgMusic").pause();
 document.getElementById("game").style.display="none";
-document.getElementById("ending").style.display="flex";
+
+let ending = document.getElementById("ending");
+ending.style.display = "flex";
+ending.style.justifyContent = "center";
+ending.style.alignItems = "center";
 
 setTimeout(()=>{
 triggerFinalScare();
