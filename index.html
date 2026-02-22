@@ -1,279 +1,246 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>The Case of the Correlation Killer</title>
+<title>Murder Mystery Stats Review</title>
 
 <style>
 body {
-    font-family: 'Courier New', monospace;
-    background-color: rgb(10,0,0);
-    color: #eee;
+    background-color: #0b0b0b;
+    color: #f5f5f5;
+    font-family: Courier New, monospace;
     text-align: center;
-    padding: 20px;
+    transition: background-color 1s ease;
     overflow-x: hidden;
-    transition: background-color 1.5s ease;
 }
 
 h1 {
     color: crimson;
-    text-shadow: 0 0 10px red;
-}
-
-.card {
-    background: #1c1c1c;
-    padding: 20px;
-    margin: 20px auto;
-    border-radius: 10px;
-    max-width: 700px;
-    box-shadow: 0 0 20px crimson;
+    text-shadow: 0 0 15px red;
 }
 
 button {
     padding: 10px 20px;
     margin: 10px;
-    background-color: crimson;
-    border: none;
+    background-color: black;
     color: white;
-    border-radius: 5px;
+    border: 1px solid crimson;
     cursor: pointer;
-    font-weight: bold;
-    transition: 0.2s;
 }
 
 button:hover {
-    background-color: darkred;
-    transform: scale(1.05);
+    background-color: crimson;
 }
 
-.correct { color: lightgreen; }
-.wrong { color: orange; }
+#game { margin-top: 40px; }
 
-#jumpscare {
+#jumpscare, #jumpscare2 {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    z-index: 999;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background-color: black;
+    border-radius: 50%;
+    position: absolute;
+}
+
+.shake {
+    animation: shake 0.4s infinite;
+}
+
+@keyframes shake {
+    0% { transform: translate(2px, 2px); }
+    25% { transform: translate(-2px, 2px); }
+    50% { transform: translate(2px, -2px); }
+    75% { transform: translate(-2px, -2px); }
+}
+
+#scatterplot {
+    width: 300px;
+    height: 300px;
+    background-color: white;
+    margin: 20px auto;
+    position: relative;
+}
+
+#ending {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    display: none;
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out, transform 5s ease-in-out;
-    transform: scale(1);
-    z-index: 9999;
-}
-
-canvas {
-    background: #111;
-    border: 2px solid crimson;
-    margin-top: 20px;
-}
-
-.shake {
-    animation: shake 0.4s;
-}
-
-@keyframes shake {
-    0% { transform: translate(5px, 5px); }
-    25% { transform: translate(-5px, 5px); }
-    50% { transform: translate(5px, -5px); }
-    75% { transform: translate(-5px, -5px); }
-    100% { transform: translate(0px, 0px); }
-}
-
-#endingScreen {
-    position: fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:black;
-    color:white;
-    display:none;
-    justify-content:center;
-    align-items:center;
-    text-align:center;
-    font-size:2rem;
-    z-index:10000;
-    flex-direction:column;
+    background-color: black;
+    color: white;
+    font-size: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 998;
+    text-align: center;
+    padding: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🕵️ The Case of the Correlation Killer</h1>
+<h1>🔪 Murder Mystery: Correlation Killer 🔪</h1>
+<div id="game"></div>
 
-<audio id="bgMusic" loop>
-    <source src="scary.mp3" type="audio/mpeg">
-</audio>
-
-<audio id="screamSound">
-    <source src="scream.mp3" type="audio/mpeg">
-</audio>
-
+<!-- Local Images -->
 <img id="jumpscare" src="jumpscare.png">
+<img id="jumpscare2" src="jumpscare2.png">
 
-<div class="card">
-    <div id="questionArea"></div>
-    <div id="feedback"></div>
+<audio id="bgMusic" src="https://www.fesliyanstudios.com/play-mp3/387" loop autoplay></audio>
+<audio id="screamSound" src="https://www.fesliyanstudios.com/play-mp3/4387"></audio>
+
+<div id="ending">
+YOU SURVIVED TONIGHT...<br><br>
+BUT HE WILL BE BACK FOR VENGEANCE.
 </div>
 
-<div id="endingScreen"></div>
-
 <script>
-let currentQuestion = 0;
-let darkness = 10;
-let bossMode = false;
+let questions = [
+{q:"What type of variables are required for a scatterplot?",
+a:["Two categorical","Two quantitative","One categorical, one quantitative","Any variables"],
+c:1},
 
-const questions = [
-{
-    question: "1) What type of variables are required for a scatterplot?",
-    options: ["Two categorical","Two quantitative","Mixed","Any"],
-    answer: 1
-},
-{
-    question: "2) If X increases and Y decreases, the direction is:",
-    options: ["Positive","Negative","Curved","None"],
-    answer: 1
-},
-{
-    question: "3) If points follow a straight line, the form is:",
-    options: ["Curved","Linear","Clustered","Random"],
-    answer: 1
-},
-{
-    question: "4) Correlation r must be between:",
-    options: ["0 to 1","-1 to 1","-10 to 10","No limit"],
-    answer: 1
-},
-{
-    question: "5) Correlation does NOT imply:",
-    options: ["Association","Causation","Direction","Strength"],
-    answer: 1
-}
+{q:"If r = -0.85, the relationship is:",
+a:["Strong positive","Strong negative","Weak negative","No relationship"],
+c:1},
+
+{q:"What does r = 0 mean?",
+a:["Strong relationship","No linear relationship","Perfect positive","Curved relationship"],
+c:1},
+
+{q:"What is the range of r?",
+a:["-1 to 1","0 to 1","-10 to 10","-100 to 100"],
+c:0},
+
+{q:"A lurking variable is:",
+a:["The response variable","A hidden variable affecting results","The explanatory variable","An outlier"],
+c:1},
+
+{q:"Correlation of 1 means:",
+a:["Perfect positive linear","Perfect negative linear","Curved relationship","No relationship"],
+c:0},
+
+{q:"Necessary condition for correlation:",
+a:["Straight enough","Large sample only","Categorical data","Outliers present"],
+c:0},
+
+{q:"Correlation vs Causation:",
+a:["They are the same","Correlation proves cause","Correlation does not prove causation","Causation proves correlation"],
+c:2}
 ];
 
-document.body.addEventListener("click", function() {
-    document.getElementById("bgMusic").play();
-}, { once: true });
+let current = 0;
+let darkness = 0;
 
-function dimScreen() {
-    darkness += 20;
-    document.body.style.backgroundColor = `rgb(${darkness/2},0,0)`;
+function loadQuestion(){
+if(current < questions.length){
+    let q = questions[current];
+    document.getElementById("game").innerHTML =
+    "<h2>"+q.q+"</h2>" +
+    q.a.map((ans,i)=>
+        `<button onclick="checkAnswer(${i})">${ans}</button>`
+    ).join("");
+}
+else{
+    loadBoss();
+}
 }
 
-function triggerJumpScare() {
-    let scare = document.getElementById("jumpscare");
-    let scream = document.getElementById("screamSound");
-
-    scare.style.display = "block";
-    scare.style.opacity = "1";
-    scare.style.transform = "scale(1.2)";
-    scream.play();
-    document.body.classList.add("shake");
-
-    setTimeout(() => {
-        scare.style.opacity = "0";
-        scare.style.transform = "scale(1)";
-        setTimeout(() => {
-            scare.style.display = "none";
-            document.body.classList.remove("shake");
-        }, 500);
-    }, 5000);
+function checkAnswer(i){
+dimScreen();
+if(i !== questions[current].c){
+    triggerJumpScare();
+}
+current++;
+setTimeout(loadQuestion,1500);
 }
 
-function loadQuestion() {
-
-    if (currentQuestion >= questions.length && !bossMode) {
-        loadBoss();
-        return;
-    }
-
-    if (bossMode) return;
-
-    let q = questions[currentQuestion];
-    let html = "<h2>" + q.question + "</h2>";
-
-    q.options.forEach((option, index) => {
-        html += `<button onclick="checkAnswer(${index})">${option}</button><br>`;
-    });
-
-    document.getElementById("questionArea").innerHTML = html;
-    document.getElementById("feedback").innerHTML = "";
+function dimScreen(){
+darkness += 15;
+let value = Math.max(0, 11 - darkness);
+document.body.style.backgroundColor = `rgb(${value},${value},${value})`;
 }
 
-function checkAnswer(selected) {
-    let correct = questions[currentQuestion].answer;
+function triggerJumpScare(){
+let scare=document.getElementById("jumpscare");
+let scream=document.getElementById("screamSound");
 
-    if (selected !== correct) {
-        triggerJumpScare();
-        document.getElementById("feedback").innerHTML =
-            "<p class='wrong'>Incorrect...</p>";
-    } else {
-        document.getElementById("feedback").innerHTML =
-            "<p class='correct'>Correct.</p>";
-    }
+scare.style.display="block";
+scream.currentTime = 0;
+scream.play();
+document.body.classList.add("shake");
 
-    dimScreen(); // dims EVERY question
-
-    currentQuestion++;
-    setTimeout(loadQuestion, 2000);
+setTimeout(()=>{
+scare.style.display="none";
+document.body.classList.remove("shake");
+},5000);
 }
 
-/* FINAL BOSS */
-function loadBoss() {
-    bossMode = true;
+function loadBoss(){
+document.getElementById("game").innerHTML =
+"<h2>FINAL BOSS: Identify the Relationship</h2>" +
+"<div id='scatterplot'></div>" +
+"<button onclick='bossAnswer(0)'>Strong Positive Linear</button>" +
+"<button onclick='bossAnswer(1)'>Strong Negative Linear</button>" +
+"<button onclick='bossAnswer(2)'>Weak Relationship</button>";
 
-    let html = `
-        <h2>☠ FINAL BOSS: Interpret the Scatterplot ☠</h2>
-        <p>What is the relationship shown?</p>
-        <canvas id="bossPlot" width="400" height="300"></canvas><br>
-        <button onclick="checkBoss(0)">Strong Positive Linear</button>
-        <button onclick="checkBoss(1)">Strong Negative Linear</button>
-        <button onclick="checkBoss(2)">No Linear Relationship</button>
-    `;
-
-    document.getElementById("questionArea").innerHTML = html;
-    drawScatter();
+generatePlot();
 }
 
-function drawScatter() {
-    const canvas = document.getElementById("bossPlot");
-    const ctx = canvas.getContext("2d");
-
-    ctx.fillStyle = "white";
-
-    for (let i = 0; i < 30; i++) {
-        let x = 50 + i*10;
-        let y = 250 - i*6 + (Math.random()*20 - 10);
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, 2*Math.PI);
-        ctx.fill();
-    }
+function generatePlot(){
+let plot=document.getElementById("scatterplot");
+plot.innerHTML="";
+for(let i=0;i<20;i++){
+let dot=document.createElement("div");
+dot.className="dot";
+dot.style.left=(i*12+20)+"px";
+dot.style.top=(280-(i*10+Math.random()*20))+"px";
+plot.appendChild(dot);
+}
 }
 
-/* Correct answer is Strong Negative Linear (option 1) */
-function checkBoss(choice) {
-
-    if (choice === 1) {
-        endGame();
-    } else {
-        triggerJumpScare();
-        dimScreen();
-        document.getElementById("feedback").innerHTML =
-            "<p class='wrong'>The killer feeds on misinterpretation...</p>";
-    }
+function bossAnswer(choice){
+if(choice===0){
+endGame();
+}
+else{
+triggerJumpScare();
+}
 }
 
-function endGame() {
-    document.getElementById("endingScreen").style.display = "flex";
-    document.getElementById("endingScreen").innerHTML = `
-        <div>
-        <p>You survived tonight...</p>
-        <p>But he will be back.</p>
-        <p>For vengeance.</p>
-        </div>
-    `;
+function endGame(){
+document.getElementById("bgMusic").pause();
+document.getElementById("game").style.display="none";
+document.getElementById("ending").style.display="flex";
+
+setTimeout(()=>{
+let scare2=document.getElementById("jumpscare2");
+let scream=document.getElementById("screamSound");
+scare2.style.display="block";
+scream.currentTime = 0;
+scream.play();
+document.body.classList.add("shake");
+
+setTimeout(()=>{
+scare2.style.display="none";
+document.body.classList.remove("shake");
+},5000);
+
+},7000);
 }
 
 loadQuestion();
