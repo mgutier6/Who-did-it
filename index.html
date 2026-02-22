@@ -5,7 +5,7 @@
 
 <style>
 body {
-    background-color: #0b0b0b;
+    background-color: rgb(20,20,20);
     color: #f5f5f5;
     font-family: Courier New, monospace;
     text-align: center;
@@ -33,6 +33,22 @@ button:hover {
 
 #game { margin-top: 40px; }
 
+#scatterplot {
+    width: 300px;
+    height: 300px;
+    background-color: white;
+    margin: 20px auto;
+    position: relative;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background-color: black;
+    border-radius: 50%;
+    position: absolute;
+}
+
 #jumpscare, #jumpscare2 {
     display: none;
     position: fixed;
@@ -50,7 +66,7 @@ button:hover {
 
 @keyframes zoomIn {
     from { transform: scale(1); }
-    to { transform: scale(1.2); }
+    to { transform: scale(1.25); }
 }
 
 .shake {
@@ -64,22 +80,6 @@ button:hover {
     75% { transform: translate(-2px, -2px); }
 }
 
-#scatterplot {
-    width: 300px;
-    height: 300px;
-    background-color: white;
-    margin: 20px auto;
-    position: relative;
-}
-
-.dot {
-    width: 8px;
-    height: 8px;
-    background-color: black;
-    border-radius: 50%;
-    position: absolute;
-}
-
 #ending {
     display: none;
     position: fixed;
@@ -90,8 +90,6 @@ button:hover {
     background-color: black;
     color: white;
     font-size: 28px;
-    justify-content: center;
-    align-items: center;
     text-align: center;
     z-index: 998;
     padding: 20px;
@@ -105,7 +103,7 @@ button:hover {
     width: 100%;
     height: 100%;
     background-color: red;
-    opacity: 0.7;
+    opacity: 0.6;
     z-index: 997;
 }
 </style>
@@ -118,13 +116,14 @@ button:hover {
 
 <img id="jumpscare" src="jumpscare.png">
 <img id="jumpscare2" src="jumpscare2.png">
-
 <div id="redFlash"></div>
 
-<audio id="bgMusic" src="https://www.fesliyanstudios.com/play-mp3/387" loop autoplay></audio>
-<audio id="screamSound" src="https://www.fesliyanstudios.com/play-mp3/4387"></audio>
+<!-- YOUR LOCAL AUDIO FILES -->
+<audio id="bgMusic" src="scary.mp3" loop autoplay></audio>
+<audio id="screamSound" src="scream.mp3"></audio>
 
 <div id="ending">
+<br><br><br><br>
 YOU SURVIVED TONIGHT...<br><br>
 BUT HE WILL BE BACK FOR VENGEANCE.
 </div>
@@ -157,7 +156,7 @@ a:["They are the same","Correlation proves cause","Correlation does not prove ca
 ];
 
 let current = 0;
-let darkness = 0;
+let darkness = 20;
 
 function loadQuestion(){
 if(current < questions.length){
@@ -172,31 +171,33 @@ else{
 }
 
 function checkAnswer(i){
-dimScreen();
+darkenScreen();
+
 if(i !== questions[current].c){
     triggerJumpScare();
 }
+
 current++;
 setTimeout(loadQuestion,1500);
 }
 
-function dimScreen(){
-darkness += 15;
-let value = Math.max(0, 11 - darkness);
-document.body.style.backgroundColor = `rgb(${value},${value},${value})`;
+function darkenScreen(){
+darkness -= 2;
+if(darkness < 0) darkness = 0;
+document.body.style.backgroundColor = `rgb(${darkness},${darkness},${darkness})`;
 }
 
 function triggerJumpScare(){
-let scare=document.getElementById("jumpscare");
-let scream=document.getElementById("screamSound");
+let scare = document.getElementById("jumpscare");
+let scream = document.getElementById("screamSound");
 
-scare.style.display="block";
-scream.currentTime=0;
+scare.style.display = "block";
+scream.currentTime = 0;
 scream.play();
 document.body.classList.add("shake");
 
 setTimeout(()=>{
-scare.style.display="none";
+scare.style.display = "none";
 document.body.classList.remove("shake");
 },5000);
 }
@@ -213,7 +214,7 @@ generatePlot();
 }
 
 function generatePlot(){
-let plot=document.getElementById("scatterplot");
+let plot = document.getElementById("scatterplot");
 plot.innerHTML="";
 for(let i=0;i<20;i++){
 let dot=document.createElement("div");
@@ -238,9 +239,7 @@ document.getElementById("bgMusic").pause();
 document.getElementById("game").style.display="none";
 
 let ending = document.getElementById("ending");
-ending.style.display = "flex";
-ending.style.justifyContent = "center";
-ending.style.alignItems = "center";
+ending.style.display="block";
 
 setTimeout(()=>{
 triggerFinalScare();
@@ -248,18 +247,21 @@ triggerFinalScare();
 }
 
 function triggerFinalScare(){
-let flash=document.getElementById("redFlash");
-let scare2=document.getElementById("jumpscare2");
-let scream=document.getElementById("screamSound");
+let flash = document.getElementById("redFlash");
+let scare2 = document.getElementById("jumpscare2");
+let scream = document.getElementById("screamSound");
 
 flash.style.display="block";
 
 setTimeout(()=>{
 flash.style.display="none";
+
 scare2.style.display="block";
 scare2.classList.add("zoom");
+
 scream.currentTime=0;
 scream.play();
+
 document.body.classList.add("shake");
 
 setTimeout(()=>{
