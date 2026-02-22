@@ -7,12 +7,12 @@
 <style>
 body {
     font-family: 'Courier New', monospace;
-    background-color: #0a0a0a;
+    background-color: rgb(10,0,0);
     color: #eee;
     text-align: center;
     padding: 20px;
     overflow-x: hidden;
-    transition: background-color 1s ease;
+    transition: background-color 1.5s ease;
 }
 
 h1 {
@@ -44,12 +44,6 @@ button {
 button:hover {
     background-color: darkred;
     transform: scale(1.05);
-}
-
-.score {
-    font-size: 18px;
-    margin-top: 10px;
-    color: lightgreen;
 }
 
 .correct { color: lightgreen; }
@@ -85,6 +79,23 @@ canvas {
     75% { transform: translate(-5px, -5px); }
     100% { transform: translate(0px, 0px); }
 }
+
+#endingScreen {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:black;
+    color:white;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    font-size:2rem;
+    z-index:10000;
+    flex-direction:column;
+}
 </style>
 </head>
 
@@ -103,31 +114,40 @@ canvas {
 <img id="jumpscare" src="jumpscare.png">
 
 <div class="card">
-    <p>Solve the questions. Each mistake darkens the room. The final boss awaits.</p>
     <div id="questionArea"></div>
     <div id="feedback"></div>
-    <div class="score">Clues: <span id="score">0</span></div>
 </div>
 
+<div id="endingScreen"></div>
+
 <script>
-let score = 0;
 let currentQuestion = 0;
 let darkness = 10;
 let bossMode = false;
 
 const questions = [
 {
-    question: "What type of variables are required for a scatterplot?",
+    question: "1) What type of variables are required for a scatterplot?",
     options: ["Two categorical","Two quantitative","Mixed","Any"],
     answer: 1
 },
 {
-    question: "If X increases while Y decreases, direction is:",
+    question: "2) If X increases and Y decreases, the direction is:",
     options: ["Positive","Negative","Curved","None"],
     answer: 1
 },
 {
-    question: "Correlation does NOT imply:",
+    question: "3) If points follow a straight line, the form is:",
+    options: ["Curved","Linear","Clustered","Random"],
+    answer: 1
+},
+{
+    question: "4) Correlation r must be between:",
+    options: ["0 to 1","-1 to 1","-10 to 10","No limit"],
+    answer: 1
+},
+{
+    question: "5) Correlation does NOT imply:",
     options: ["Association","Causation","Direction","Strength"],
     answer: 1
 }
@@ -138,7 +158,7 @@ document.body.addEventListener("click", function() {
 }, { once: true });
 
 function dimScreen() {
-    darkness += 15;
+    darkness += 20;
     document.body.style.backgroundColor = `rgb(${darkness/2},0,0)`;
 }
 
@@ -149,7 +169,6 @@ function triggerJumpScare() {
     scare.style.display = "block";
     scare.style.opacity = "1";
     scare.style.transform = "scale(1.2)";
-
     scream.play();
     document.body.classList.add("shake");
 
@@ -173,8 +192,7 @@ function loadQuestion() {
     if (bossMode) return;
 
     let q = questions[currentQuestion];
-    let html = "<h2>Question " + (currentQuestion + 1) + "</h2>";
-    html += "<p>" + q.question + "</p>";
+    let html = "<h2>" + q.question + "</h2>";
 
     q.options.forEach((option, index) => {
         html += `<button onclick="checkAnswer(${index})">${option}</button><br>`;
@@ -187,20 +205,18 @@ function loadQuestion() {
 function checkAnswer(selected) {
     let correct = questions[currentQuestion].answer;
 
-    if (selected === correct) {
-        score++;
+    if (selected !== correct) {
+        triggerJumpScare();
         document.getElementById("feedback").innerHTML =
-            "<p class='correct'>Correct... you survive.</p>";
+            "<p class='wrong'>Incorrect...</p>";
     } else {
         document.getElementById("feedback").innerHTML =
-            "<p class='wrong'>WRONG. The room grows darker.</p>";
-        triggerJumpScare();
-        dimScreen();
+            "<p class='correct'>Correct.</p>";
     }
 
-    document.getElementById("score").innerText = score;
-    currentQuestion++;
+    dimScreen(); // dims EVERY question
 
+    currentQuestion++;
     setTimeout(loadQuestion, 2000);
 }
 
@@ -210,7 +226,7 @@ function loadBoss() {
 
     let html = `
         <h2>☠ FINAL BOSS: Interpret the Scatterplot ☠</h2>
-        <p>Click the correct interpretation of this relationship.</p>
+        <p>What is the relationship shown?</p>
         <canvas id="bossPlot" width="400" height="300"></canvas><br>
         <button onclick="checkBoss(0)">Strong Positive Linear</button>
         <button onclick="checkBoss(1)">Strong Negative Linear</button>
@@ -236,17 +252,28 @@ function drawScatter() {
     }
 }
 
+/* Correct answer is Strong Negative Linear (option 1) */
 function checkBoss(choice) {
 
     if (choice === 1) {
-        document.getElementById("feedback").innerHTML =
-            "<h2 style='color:lightgreen;'>YOU DEFEATED THE CORRELATION KILLER.</h2>";
+        endGame();
     } else {
-        document.getElementById("feedback").innerHTML =
-            "<h2 style='color:orange;'>Incorrect. The Killer claims another victim.</h2>";
         triggerJumpScare();
         dimScreen();
+        document.getElementById("feedback").innerHTML =
+            "<p class='wrong'>The killer feeds on misinterpretation...</p>";
     }
+}
+
+function endGame() {
+    document.getElementById("endingScreen").style.display = "flex";
+    document.getElementById("endingScreen").innerHTML = `
+        <div>
+        <p>You survived tonight...</p>
+        <p>But he will be back.</p>
+        <p>For vengeance.</p>
+        </div>
+    `;
 }
 
 loadQuestion();
