@@ -3,60 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <title>The Case of the Correlation Killer</title>
+
 <style>
-    body {
-        font-family: 'Courier New', monospace;
-        background-color: #111;
-        color: #eee;
-        text-align: center;
-        padding: 20px;
-    }
+body {
+    font-family: 'Courier New', monospace;
+    background-color: #0a0a0a;
+    color: #eee;
+    text-align: center;
+    padding: 20px;
+    overflow-x: hidden;
+}
 
-    h1 {
-        color: crimson;
-    }
+h1 {
+    color: crimson;
+    text-shadow: 0 0 10px red;
+}
 
-    .card {
-        background: #1c1c1c;
-        padding: 20px;
-        margin: 20px auto;
-        border-radius: 10px;
-        max-width: 700px;
-        box-shadow: 0 0 15px crimson;
-    }
+.card {
+    background: #1c1c1c;
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 10px;
+    max-width: 700px;
+    box-shadow: 0 0 20px crimson;
+}
 
-    button {
-        padding: 10px 20px;
-        margin: 10px;
-        background-color: crimson;
-        border: none;
-        color: white;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-    }
+button {
+    padding: 10px 20px;
+    margin: 10px;
+    background-color: crimson;
+    border: none;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.2s;
+}
 
-    button:hover {
-        background-color: darkred;
-    }
+button:hover {
+    background-color: darkred;
+    transform: scale(1.05);
+}
 
-    .hidden {
-        display: none;
-    }
+.score {
+    font-size: 18px;
+    margin-top: 10px;
+    color: lightgreen;
+}
 
-    .score {
-        font-size: 18px;
-        margin-top: 10px;
-        color: lightgreen;
-    }
+.correct { color: lightgreen; }
+.wrong { color: orange; }
 
-    .wrong {
-        color: orange;
-    }
+#jumpscare {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    z-index: 9999;
+}
 
-    .correct {
-        color: lightgreen;
-    }
+.shake {
+    animation: shake 0.4s;
+}
+
+@keyframes shake {
+    0% { transform: translate(5px, 5px); }
+    25% { transform: translate(-5px, 5px); }
+    50% { transform: translate(5px, -5px); }
+    75% { transform: translate(-5px, -5px); }
+    100% { transform: translate(0px, 0px); }
+}
 </style>
 </head>
 
@@ -64,13 +82,21 @@
 
 <h1>🕵️ The Case of the Correlation Killer</h1>
 
-<div class="card" id="game">
+<audio id="bgMusic" loop>
+    <source src="scary.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="screamSound">
+    <source src="scream.mp3" type="audio/mpeg">
+</audio>
+
+<img id="jumpscare" src="jumpscare.png">
+
+<div class="card">
     <p id="story">
-        A famous statistics professor has been found unconscious in the classroom.
-        The only clue? A mysterious scatterplot drawn on the board...
+        A statistics professor collapsed after misinterpreting a scatterplot.
         <br><br>
-        To solve the case, you must answer statistics questions correctly.
-        Each correct answer unlocks a clue.
+        Solve the questions. Collect clues. Stop the Correlation Killer.
     </p>
 
     <div id="questionArea"></div>
@@ -79,62 +105,45 @@
 </div>
 
 <script>
-
 let score = 0;
 let currentQuestion = 0;
 
 const questions = [
 {
-    question: "What type of variables are required to create a scatterplot?",
+    question: "What type of variables are required for a scatterplot?",
     options: [
-        "Two categorical variables",
-        "Two quantitative variables",
-        "One categorical and one quantitative",
-        "Any two variables"
+        "Two categorical",
+        "Two quantitative",
+        "One categorical & one quantitative",
+        "Any variables"
     ],
     answer: 1
 },
 {
-    question: "If a scatterplot shows that as X increases, Y decreases, the relationship is:",
-    options: [
-        "Positive",
-        "Negative",
-        "Curved",
-        "Strong"
-    ],
+    question: "If X increases while Y decreases, the direction is:",
+    options: ["Positive", "Negative", "Curved", "Clustered"],
     answer: 1
 },
 {
-    question: "If the points follow roughly a straight line, the form is:",
-    options: [
-        "Curved",
-        "Clustered",
-        "Linear",
-        "Random"
-    ],
-    answer: 2
+    question: "If points follow a straight line, the form is:",
+    options: ["Curved", "Linear", "Weak", "Random"],
+    answer: 1
 },
 {
-    question: "What are the possible bounds of correlation (r)?",
-    options: [
-        "0 to 1",
-        "-10 to 10",
-        "-1 to 1",
-        "No limits"
-    ],
-    answer: 2
+    question: "Correlation r must be between:",
+    options: ["0 to 1", "-1 to 1", "-10 to 10", "No limits"],
+    answer: 1
 },
 {
-    question: "A correlation of 0 means:",
-    options: [
-        "Strong positive relationship",
-        "Strong negative relationship",
-        "No linear relationship",
-        "Causation"
-    ],
-    answer: 2
+    question: "Correlation does NOT imply:",
+    options: ["Association", "Causation", "Direction", "Strength"],
+    answer: 1
 }
 ];
+
+document.body.addEventListener("click", function() {
+    document.getElementById("bgMusic").play();
+}, { once: true });
 
 function loadQuestion() {
     if (currentQuestion >= questions.length) {
@@ -154,16 +163,34 @@ function loadQuestion() {
     document.getElementById("feedback").innerHTML = "";
 }
 
+function triggerJumpScare(intense=false) {
+    let scare = document.getElementById("jumpscare");
+    let scream = document.getElementById("screamSound");
+
+    scare.style.display = "block";
+    scream.volume = intense ? 1.0 : 0.6;
+    scream.play();
+
+    document.body.classList.add("shake");
+
+    setTimeout(() => {
+        scare.style.display = "none";
+        document.body.classList.remove("shake");
+    }, 600);
+}
+
 function checkAnswer(selected) {
     let correct = questions[currentQuestion].answer;
 
     if (selected === correct) {
         score++;
         document.getElementById("feedback").innerHTML =
-            "<p class='correct'>Correct! 🔍 You found a clue.</p>";
+            "<p class='correct'>Correct. You found a clue...</p>";
+        triggerJumpScare(false);
     } else {
         document.getElementById("feedback").innerHTML =
-            "<p class='wrong'>Wrong! The killer laughs in statistical superiority.</p>";
+            "<p class='wrong'>WRONG. The killer feeds on weak statistical reasoning.</p>";
+        triggerJumpScare(true);
     }
 
     document.getElementById("score").innerText = score;
@@ -178,23 +205,20 @@ function endGame() {
     if (score >= 4) {
         ending = `
         <h2>🎉 Case Solved!</h2>
-        <p>You discovered that the scatterplot showed a STRONG NEGATIVE LINEAR relationship.
-        The professor collapsed after confusing correlation with causation!
-        You exposed the real culprit: Misinterpreted Data!</p>
+        <p>You exposed the real culprit: CONFUSING CORRELATION WITH CAUSATION.</p>
+        <p>The professor survives. Statistics is saved.</p>
         `;
     } else {
         ending = `
-        <h2>💀 Case Unsolved...</h2>
-        <p>You failed to gather enough clues.
-        The Correlation Killer escapes to mislead another statistics class.</p>
+        <h2>💀 The Killer Escapes...</h2>
+        <p>Weak interpretation of scatterplots has consequences.</p>
+        <p>The Correlation Killer remains at large.</p>
         `;
     }
 
     document.getElementById("questionArea").innerHTML = ending;
 }
-
 loadQuestion();
-
 </script>
 
 </body>
