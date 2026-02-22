@@ -32,6 +32,11 @@ button:hover {
 }
 
 #game { margin-top: 40px; }
+#clues {
+    font-size: 18px;
+    margin-top: 20px;
+    color: gold;
+}
 
 #scatterplot {
     width: 300px;
@@ -58,15 +63,6 @@ button:hover {
     height: 100vh;
     object-fit: cover;
     z-index: 999;
-}
-
-.zoom {
-    animation: zoomIn 5s forwards;
-}
-
-@keyframes zoomIn {
-    from { transform: scale(1); }
-    to { transform: scale(1.25); }
 }
 
 .shake {
@@ -112,13 +108,14 @@ button:hover {
 <body>
 
 <h1>🔪 Murder Mystery: Correlation Killer 🔪</h1>
+<div id="clues">Clues found: 0 / 8</div>
 <div id="game"></div>
 
 <img id="jumpscare" src="jumpscare.png">
 <img id="jumpscare2" src="jumpscare2.png">
 <div id="redFlash"></div>
 
-<!-- YOUR LOCAL AUDIO FILES -->
+<!-- Your local audio files -->
 <audio id="bgMusic" src="scary.mp3" loop autoplay></audio>
 <audio id="screamSound" src="scream.mp3"></audio>
 
@@ -164,6 +161,7 @@ if(current < questions.length){
     document.getElementById("game").innerHTML =
     "<h2>"+q.q+"</h2>" +
     q.a.map((ans,i)=>`<button onclick="checkAnswer(${i})">${ans}</button>`).join("");
+    document.getElementById("clues").innerText = `Clues found: ${current} / ${questions.length}`;
 }
 else{
     loadBoss();
@@ -211,6 +209,7 @@ document.getElementById("game").innerHTML =
 "<button onclick='bossAnswer(2)'>Weak Relationship</button>";
 
 generatePlot();
+document.getElementById("clues").innerText = `Clues found: ${current} / ${questions.length}`;
 }
 
 function generatePlot(){
@@ -235,11 +234,12 @@ triggerJumpScare();
 }
 
 function endGame(){
-document.getElementById("bgMusic").pause();
 document.getElementById("game").style.display="none";
 
 let ending = document.getElementById("ending");
-ending.style.display="block";
+ending.style.display = "block";
+
+document.getElementById("bgMusic").pause();
 
 setTimeout(()=>{
 triggerFinalScare();
@@ -256,9 +256,7 @@ flash.style.display="block";
 setTimeout(()=>{
 flash.style.display="none";
 
-scare2.style.display="block";
-scare2.classList.add("zoom");
-
+scare2.style.display="block";  // Zoom removed
 scream.currentTime=0;
 scream.play();
 
@@ -266,12 +264,15 @@ document.body.classList.add("shake");
 
 setTimeout(()=>{
 scare2.style.display="none";
-scare2.classList.remove("zoom");
 document.body.classList.remove("shake");
 },5000);
 
 },300);
 }
+
+// Ensure background music plays continuously
+let bgMusic = document.getElementById("bgMusic");
+bgMusic.play().catch(()=>{}); // prevent autoplay errors
 
 loadQuestion();
 </script>
